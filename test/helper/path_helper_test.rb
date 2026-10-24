@@ -143,6 +143,29 @@ class PathHelperTest < Minitest::Spec
     # step :a, Output(:failure) => Path(terminus: :roundtrip) do
   end
 
+  it "allows to use helpers *with constants* from the outer topology" do
+    my_helper_module = Module.new do
+      module Policy
+        def self.Guard(name)
+          name
+        end
+      end
+    end
+
+    my_activity = Class.new(Trailblazer::Activity::Railway) do
+      include my_helper_module
+
+      step :b, Output(:failure) => Path(connect_to: Terminus(:success)) do
+        step Policy::Guard(:c)
+      end
+
+      include T.def_steps(:b, :c)
+    end
+
+    assert_run my_activity, terminus: :success, seq: [:b]
+    assert_run my_activity, terminus: :success, seq: [1, :b, :c], target_ctx: {seq: [1], b: false}
+  end
+
   # it "allows creating an empty Path()" do
 
   # end
