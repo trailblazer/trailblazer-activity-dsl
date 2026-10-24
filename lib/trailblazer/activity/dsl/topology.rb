@@ -11,7 +11,7 @@ module Trailblazer
         setting :builder # this keeps the Sequence instance.
         setting :circuit
         setting :outputs
-        setting :helper_forwarder # Where we delegate Subprocess(, Output() etc.
+        setting :helpers_module # Contains all macros like Subprocess(, Output() etc.
 
         extend DSL # {#forward_to_builder!}
         extend DSL::Step # #step
@@ -38,22 +38,24 @@ module Trailblazer
 
         config.builder = Builder.new(default_options: {})
 
-        # DISCUSS: keep this here? We use it as a target in helper_forwarder.
-        def self.helper_forwarder_target
-          config.builder
-        end
-
-        def self.build(builder:, default_options:, helpers: false, adds:, &block)
+        def self.build(builder:, default_options:, helpers: false, constants: false, adds:, &block)
           helper_modules = nil # FIXME: extract to separate method.
-          helper_forwarder = Module.new
 
           if helpers
             helper_modules = helpers.keys
-            helper_functions = helpers.values.flatten.uniq
+            helper_methods = helpers.values.flatten.uniq # [:Output, :Track, :In, ...]
 
-            helper_forwarder = Module.new do
-              extend Forwardable
-              def_delegators :helper_forwarder_target, *helper_functions
+            helpers_module = Module.new do
+              @helper_modules = helper_modules
+              @helper_methods = helper_methods
+              @constants = constants
+
+              # this is called when doing {MyTopology.include helper}.
+              def self.included(includer)
+                includer.include *@constants if @constants
+                includer.extend *@helper_modules if @helper_modules
+                includer.singleton_class.send(:public, *@helper_methods)
+              end
             end
           end
 
@@ -66,7 +68,7 @@ module Trailblazer
 
           circuit, outputs, _ = builder.(&block) if block_given?
 
-          return circuit, outputs, builder, helper_forwarder
+          return circuit, outputs, builder, helpers_module
         end
       end
     end # DSL

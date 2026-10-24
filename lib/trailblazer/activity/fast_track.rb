@@ -118,7 +118,7 @@ module Trailblazer
         step **DSL.options_for_terminus_step(semantic: :fail_fast, terminus_class: FastTrack::Terminus::FailFast)
       end
 
-      extend Path.config.helper_forwarder # forward Output() and friends to {builder}.
+      include Path.config.helpers_module
     end
   end
 end

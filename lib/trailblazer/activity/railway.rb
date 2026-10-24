@@ -48,7 +48,7 @@ module Trailblazer
       end
 
       # Trailblazer::Developer.puts(config.builder.normalizers[:step])
-      extend Path.config.helper_forwarder # forward Output() and friends to {builder}.
+      include Path.config.helpers_module
     end
   end
 end

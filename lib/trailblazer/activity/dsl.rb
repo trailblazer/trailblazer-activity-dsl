@@ -1,6 +1,6 @@
 require "trailblazer/activity"
 require "dry/configurable"
-require "forwardable"
+# require "forwardable"
 
 module Trailblazer
   class Activity # DISCUSS: the Activity class is defined in the activity gem and already got some {setting} directives.
@@ -90,7 +90,7 @@ require "trailblazer/activity/dsl/feature/extension/task_wrap"
 require "trailblazer/activity/dsl/feature/extension/options"
 
 [Trailblazer::Activity::Path, Trailblazer::Activity::Railway, Trailblazer::Activity::FastTrack].each do |topology|
-  circuit, outputs, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
+  circuit, outputs, builder, helpers = Trailblazer::Activity::DSL::Topology.build(
     builder: topology.config.builder, default_options: {},
 
     # DISCUSS: we introduced VariableMapping::TOPOLOGY_BUILD_OPTIONS, should we do that here with all features?
@@ -127,5 +127,5 @@ require "trailblazer/activity/dsl/feature/extension/options"
   )
 
   topology.config.builder = builder
-  topology.extend helper_forwarder
+  topology.include helpers
 end

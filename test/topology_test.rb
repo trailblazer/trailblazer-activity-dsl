@@ -65,15 +65,14 @@ class TopologyTest < Minitest::Spec
     output = builder.instance_exec { Output(:success) }
     assert_equal output.inspect, "#<struct Trailblazer::Activity::DSL::Feature::OutputTuples::Output::Semantic semantic=:success, :generic?=nil>"
 
-    output = Struct.new(:helper_forwarder_target) do
+    output = Class.new do
       include helper
-
-    end.new(builder).Output(:success)
+    end.Output(:success)
 
     assert_equal output.inspect, "#<struct Trailblazer::Activity::DSL::Feature::OutputTuples::Output::Semantic semantic=:success, :generic?=nil>"
   end
 
-  it "Topology.build {:helpers} can also import constants like Policy::Guard()" do
+  it "Topology.build {:helpers} can also import {:constants} like Policy::Guard()" do
     my_builder = Trailblazer::Activity::DSL::Builder.new(
       normalizers: {step: Trailblazer::Activity::DSL::Normalizer::Step},
       default_options: Trailblazer::Activity::Path.default_options_for_builder
@@ -84,9 +83,11 @@ class TopologyTest < Minitest::Spec
         MyExtension::Policy
       end
 
-      module Policy
-        def self.Guard(action:)
-          {task: "guarding #{action}"}
+      module Constants
+        module Policy
+          def self.Guard(action:)
+            {task: "guarding #{action}"}
+          end
         end
       end
     end
@@ -99,30 +100,82 @@ class TopologyTest < Minitest::Spec
         MyExtension => [:Policy],
         # Module.new => [],
       },
+      constants: [MyExtension::Constants]
     }
 
     circuit, outputs, builder, helper = Trailblazer::Activity::DSL::Topology.build(**options) {
       step **Trailblazer::Activity::DSL.options_for_terminus_step(semantic: :success, terminus_class: Trailblazer::Activity::Terminus::Success)
     }
 
+    # DISCUSS: the builder DOES NOT know Policy, it's an instance.
     # # the builder basically knows builder::Policy.Guard
-    output = builder.Policy::Guard(action: :create)
-
-    assert_equal output, {task: "guarding create"}
+    # output = builder.const_get(:Policy)::Guard(action: :create)
+    # assert_equal output, {task: "guarding create"}
 
     my_topology_simulator = Class.new do
-      @builder = builder
-
-      extend helper
-
-      def self.helper_forwarder_target
-        @builder
-      end
+      include helper
     end
 
-    output = my_topology_simulator.Policy.Guard(action: :success)
+    output = my_topology_simulator::Policy::Guard(action: :success)
 
     assert_equal output, {task: "guarding success"}
+
+    #
+    # FIXME: move to separate test case.
+    # We want Model() and Model::Find()
+    module MyModel
+      module Constant
+        module Model
+          def self.Find(id:)
+            "from Model::Find #{id}"
+          end
+        end
+      end
+
+      module Helper
+        def Model(id)
+          "from Model #{id}"
+        end
+      end
+    end
+    options = {
+      builder: my_builder,
+      adds: [],
+      default_options: {},
+      helpers: {
+        MyModel::Helper => [:Model],
+      },
+      constants: [MyModel::Constant],
+    }
+
+    circuit, outputs, builder, helper = Trailblazer::Activity::DSL::Topology.build(**options) {
+      step **Trailblazer::Activity::DSL.options_for_terminus_step(semantic: :success, terminus_class: Trailblazer::Activity::Terminus::Success)
+    }
+
+    output = builder.Model(1)
+    assert_equal output, "from Model 1"
+
+    # this cannot work.
+    # assert_equal builder::Model::Find(id: 1)
+
+    my_topology_simulator = Class.new do
+      include helper
+    end
+
+    assert_equal my_topology_simulator::Model::Find(id: 1), "from Model::Find 1"
+
+
+#
+# we can use constants and helpers "in the builder"
+#
+# MyHelper = helper
+#     class Bla < Trailblazer::Activity::Path
+
+#       include MyHelper
+#       config.builder.instance_exec do
+#         Model::Find(id: 2)
+#       end
+#     end
   end
 
   it "#to_h with empty Topology" do

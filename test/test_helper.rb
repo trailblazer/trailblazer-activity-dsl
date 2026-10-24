@@ -61,7 +61,7 @@ module MyTest
         default_options: Trailblazer::Activity::Path.default_options_for_builder
       )
 
-      circuit, outputs, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
+      circuit, outputs, builder, helpers_module = Trailblazer::Activity::DSL::Topology.build(
         builder: my_builder,
         default_options: default_options,
         helpers: {
@@ -77,7 +77,7 @@ module MyTest
       )
 
       config.builder = builder
-      extend helper_forwarder
+      include helpers_module
     end
   end
 end
