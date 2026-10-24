@@ -6,17 +6,13 @@ module Trailblazer
         class Path < Struct.new(:options)
           module Helper
             def Path(**options)
-              options = {
-                exec_context: default_options.fetch(:step).fetch(:exec_context)
-              }.merge(options)
-
               Path.new(options)
             end
           end
 
           # FIXME: we're defaulting {:adds_for_sequence}, which is redundant, see DSL::Normalizer::Step.
-          def call(block_arg: -> {}, adds_for_sequence: [], sequence:, **ctx) # This is called in OutputTuples::Normalizer#
-            build_path(block_arg: block_arg, sequence: sequence, **options)
+          def call(block_arg: -> {}, adds_for_sequence: [], sequence:, exec_context:, **ctx) # This is called in OutputTuples::Normalizer#
+            build_path(block_arg: block_arg, sequence: sequence, exec_context: exec_context, **options)
           end
 
           # TODO: deprecate {:terminus} etc.
