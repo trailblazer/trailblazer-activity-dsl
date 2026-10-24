@@ -10,8 +10,7 @@ module Trailblazer
             end
           end
 
-          # FIXME: we're defaulting {:adds_for_sequence}, which is redundant, see DSL::Normalizer::Step.
-          def call(block_arg: -> {}, adds_for_sequence: [], sequence:, exec_context:, **ctx) # This is called in OutputTuples::Normalizer#
+          def call(block_arg: -> {}, sequence:, exec_context:, **ctx) # This is called in OutputTuples::Normalizer#
             build_path(block_arg: block_arg, sequence: sequence, exec_context: exec_context, **options)
           end
 
