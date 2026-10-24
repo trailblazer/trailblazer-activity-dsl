@@ -16,6 +16,10 @@ module Trailblazer
           return ctx, flow_options, first_arg ? Activity::Right : Activity::Left
         end
 
+        def self.is_node?(ctx, flow_options, _, node_for_call_task: nil, **) # FIXME: test
+          return ctx, flow_options, node_for_call_task ? Activity::Right : Activity::Left
+        end
+
         def self.build_node_for_step(ctx, flow_options, _, first_arg:, id:, exec_context:, **) # FIXME: {:exec_context} is not mandatory.
           step_node_for_call_task = Activity::Step.build(first_arg, id: id, exec_context: exec_context)
 
@@ -38,7 +42,7 @@ module Trailblazer
         end
 
         def self.build_task_wrap_node(ctx, flow_options, _, task_wrap_pipeline:, **)
-          task_wrap_node = Circuit::Node[task_wrap_pipeline, Circuit::Processor, options: {business_step: true}] # FIXME: test business_step and also for task!
+          task_wrap_node = Circuit::Node[task_wrap_pipeline, Circuit::Processor, options: {business_step: true, task_wrap: true}] # FIXME: test :business_step and :task_wrap and also for task!
 
           return ctx.merge(node: task_wrap_node), flow_options
         end
@@ -103,8 +107,9 @@ module Trailblazer
         # DISCUSS: should we use proper {:connections} hashes here? it seems to work like that.
         Step = Circuit::Builder.Circuit(
           [:normalize_macro_interface, method(:normalize_macro_interface)],
-          [:is_step?, method(:is_step?), connections: {Activity::Left => [:build_node_for_task, Activity::Left], Activity::Right => [:normalize_id_for_step, Activity::Right]}],
+          [:is_step?, method(:is_step?), connections: {Activity::Left => [:is_node?, Activity::Left], Activity::Right => [:normalize_id_for_step, Activity::Right]}],
           [:normalize_id_for_step, method(:normalize_id_for_step), connections: {nil => :build_node_for_step}], # DISCUSS: what if we need to know what
+          [:is_node?, method(:is_node?), connections: {Activity::Left => [:build_node_for_task, Activity::Left], Activity::Right => [:build_task_wrap_pipeline, Activity::Right]}],
           [:build_node_for_task, method(:build_node_for_task), connections: {nil => :build_task_wrap_pipeline}],
           [:build_node_for_step, method(:build_node_for_step), connections: {nil => :build_task_wrap_pipeline}],
           [:build_task_wrap_pipeline, method(:build_task_wrap_pipeline)],

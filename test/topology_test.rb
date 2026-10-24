@@ -386,6 +386,24 @@ class TopologyTest < Minitest::Spec
     assert_run my_topology, seq: [:a], terminus: Trailblazer::Activity::Right
   end
 
+  it "#step accepts {:node_for_call_task}, too, instead of {:task}" do
+    my_node = Trailblazer::Activity::Step.build(:a, exec_context: T.def_steps(:a))
+
+    my_topology = Class.new(Trailblazer::Activity::DSL::Topology) do
+      self.config.builder = Trailblazer::Activity::DSL::Builder.new(**MyTest.my_options_for_builder)
+
+      step(
+        { # explicit hash, not kwargs!
+          node_for_call_task: my_node,
+          id: :a,
+          wirings: {Trailblazer::Activity::Output.new(Trailblazer::Activity::Right, :success) => Trailblazer::Activity::DSL::Sequence::Search::Nil.new}
+        }
+      )
+    end
+
+    assert_run my_topology, seq: [:a], terminus: Trailblazer::Activity::Right
+  end
+
   it "accepts {:adapter}" do
     my_adapter = ->(task, ctx, flow_options, *) do
       T.def_steps(:a).method(:a).(ctx[:target_ctx], **ctx[:target_ctx]) # mutability sucks.
