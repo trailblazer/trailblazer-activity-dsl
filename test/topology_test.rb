@@ -252,6 +252,29 @@ class TopologyTest < Minitest::Spec
     assert_run my_topology.to_h[:circuit].nodes[:terminus_success].task, seq: [:b], terminus: Trailblazer::Activity::Right
   end
 
+  it "options like {:id} in the second (macro) hash win" do
+    my_topology = Class.new(Trailblazer::Activity::DSL::Topology) do
+      self.config.builder = Trailblazer::Activity::DSL::Builder.new(**MyTest.my_options_for_builder)
+
+      step(
+        {
+          id: :override_me,
+          task: T.def_task(:override_me),
+          wirings: {},
+        },
+
+        **{
+          id: :id_override,
+          task: T.def_task(:b),
+          wirings: {Trailblazer::Activity::Output.new(Trailblazer::Activity::Right, :success) => Trailblazer::Activity::DSL::Sequence::Search::Nil.new},
+        }
+
+      )
+    end
+
+    assert_equal my_topology.to_h[:circuit].nodes[:id_override].class, Trailblazer::Circuit::Node
+  end
+
   it "#step raises error with {:id} already used" do
     my_topology = Class.new(Trailblazer::Activity::DSL::Topology) do
       self.config.builder = Trailblazer::Activity::DSL::Builder.new(**MyTest.my_options_for_builder)

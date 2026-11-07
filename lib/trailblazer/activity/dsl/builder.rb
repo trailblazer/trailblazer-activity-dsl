@@ -34,15 +34,23 @@ module Trailblazer
         end
 
         # NOTE: we only update sequence here, compiling is the job of the caller.
-        def step!(type, user_provider = nil, **options, &block)
+        def step!(type, first_arg = nil, **options, &block)
           options = options.merge(block_arg: block) if block_given?
+
+          macro_options = {}
+
+          if first_arg.is_a?(Hash) # eg Subprocess()
+            macro_options = first_arg
+            first_arg = nil
+          end
+
+          options = options.merge(first_arg: first_arg)
 
           self.sequence = alter_sequence(
             self.sequence,
             self.normalizers.fetch(type),
-
-            user_provider,
             **self.default_options.fetch(type), # these are settings such as {magnetic_to:}, settable per builder.
+            **macro_options,
             **options
           )
         end
@@ -61,8 +69,8 @@ module Trailblazer
         end
 
         # @private
-        def alter_sequence(sequence, normalizers, user_provider, **options)
-          adds_for_sequence = Normalizer.(normalizers, :step, user_provider,
+        def alter_sequence(sequence, normalizers, **options)
+          adds_for_sequence = Normalizer.(normalizers, :step,
             **options,
             sequence: sequence # TODO: explicitely test that we pass {:sequence}.
           )

@@ -2,15 +2,6 @@ module Trailblazer
   class Activity
     module DSL
       class Normalizer
-        # When the first arg is a hash, merge it.
-        def self.normalize_macro_interface(ctx, flow_options, _, first_arg:, **)
-          if first_arg.is_a?(Hash)
-            ctx = ctx.merge(**first_arg, first_arg: nil)
-          end
-
-          return ctx, flow_options
-        end
-
         # if the {first_arg} is something not nil, we need to convert it to a real Step (node).
         def self.is_step?(ctx, flow_options, _, first_arg:, **)
           return ctx, flow_options, first_arg ? Activity::Right : Activity::Left
@@ -106,7 +97,6 @@ module Trailblazer
 
         # DISCUSS: should we use proper {:connections} hashes here? it seems to work like that.
         Step = Circuit::Builder.Circuit(
-          [:normalize_macro_interface, method(:normalize_macro_interface)],
           [:is_step?, method(:is_step?), connections: {Activity::Left => [:is_node?, Activity::Left], Activity::Right => [:normalize_id_for_step, Activity::Right]}],
           [:normalize_id_for_step, method(:normalize_id_for_step), connections: {nil => :build_node_for_step}], # DISCUSS: what if we need to know what
           [:is_node?, method(:is_node?), connections: {Activity::Left => [:build_node_for_task, Activity::Left], Activity::Right => [:build_task_wrap_pipeline, Activity::Right]}],
