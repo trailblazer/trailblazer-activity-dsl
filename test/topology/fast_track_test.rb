@@ -7,7 +7,7 @@ class TopologyFastTrackTest < Minitest::Spec
 
     assert_equal my_activity.to_h[:outputs].keys, [:success, :failure, :pass_fast, :fail_fast]
 
-    assert_run my_activity.to_h[:circuit], seq: [], terminus: my_activity.to_h[:outputs].fetch(:success).signal
+    assert_run my_activity, seq: [], terminus: :success
   end
 
   it "#step" do
@@ -18,9 +18,9 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # {#a} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [:a], terminus: my_activity.to_h[:outputs].fetch(:success).signal
+    assert_run my_activity, seq: [:a], terminus: :success
     # {#a} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:failure).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a], terminus: :failure, target_ctx: {seq: [1], a: false}
   end
 
   it "#step, pass_fast: true" do
@@ -32,9 +32,9 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # {#a} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [:a], terminus: my_activity.to_h[:outputs].fetch(:pass_fast).signal
+    assert_run my_activity, seq: [:a], terminus: :pass_fast
     # {#a} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:failure).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a], terminus: :failure, target_ctx: {seq: [1], a: false}
   end
 
   it "#step, fail_fast: true" do
@@ -47,9 +47,9 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # {#a} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [:a, :b], terminus: my_activity.to_h[:outputs].fetch(:success).signal
+    assert_run my_activity, seq: [:a, :b], terminus: :success
     # {#a} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast, target_ctx: {seq: [1], a: false}
   end
 
   it "#step, pass_fast: true, fail_fast: true" do
@@ -62,9 +62,9 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # {#a} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [:a], terminus: my_activity.to_h[:outputs].fetch(:pass_fast).signal
+    assert_run my_activity, seq: [:a], terminus: :pass_fast
     # {#a} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast, target_ctx: {seq: [1], a: false}
   end
 
   it "we can reference the existing FastTrack termini" do
@@ -77,9 +77,9 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # {#a} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [:a], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal
+    assert_run my_activity, seq: [:a], terminus: :fail_fast
     # {#a} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a, :c], terminus: my_activity.to_h[:outputs].fetch(:failure).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a, :c], terminus: :failure, target_ctx: {seq: [1], a: false}
   end
 
   it "#pass, pass_fast: true" do
@@ -92,9 +92,9 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # {#a} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [:a], terminus: my_activity.to_h[:outputs].fetch(:pass_fast).signal
+    assert_run my_activity, seq: [:a], terminus: :pass_fast
     # {#a} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:pass_fast).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a], terminus: :pass_fast, target_ctx: {seq: [1], a: false}
   end
 
   it "#left, fail_fast: true" do
@@ -108,9 +108,9 @@ class TopologyFastTrackTest < Minitest::Spec
 
     # Both Right and Left go to fail_fast from {#b}
     # {#b} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [1, :a, :b], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a, :b], terminus: :fail_fast, target_ctx: {seq: [1], a: false}
     # {#b} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a, :b], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a, :b], terminus: :fail_fast, target_ctx: {seq: [1], a: false}
   end
 
   it "{#left} is alias for {#fail}" do
@@ -122,9 +122,9 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # {#a} --> Right
-    assert_run my_activity.to_h[:circuit], seq: [:a], terminus: my_activity.to_h[:outputs].fetch(:success).signal
+    assert_run my_activity, seq: [:a], terminus: :success
     # {#b} --> Left
-    assert_run my_activity.to_h[:circuit], seq: [1, :a, :b], terminus: my_activity.to_h[:outputs].fetch(:failure).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a, :b], terminus: :failure, target_ctx: {seq: [1], a: false}
   end
 
   it "#step, fast_track: true, step returns a FastTrack::Signal" do
@@ -137,14 +137,14 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # a --> true
-    assert_run my_activity.to_h[:circuit], seq: [:a, :c], terminus: my_activity.to_h[:outputs].fetch(:success).signal, target_ctx: {seq: []}
+    assert_run my_activity, seq: [:a, :c], terminus: :success, target_ctx: {seq: []}
     # a --> false
-    assert_run my_activity.to_h[:circuit], seq: [1, :a, :b], terminus: my_activity.to_h[:outputs].fetch(:failure).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a, :b], terminus: :failure, target_ctx: {seq: [1], a: false}
     # a --> PassFast
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:pass_fast).signal,
+    assert_run my_activity, seq: [1, :a], terminus: :pass_fast,
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::PassFast}
     # a --> FailFast
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal,
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast,
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::FailFast}
   end
 
@@ -159,14 +159,14 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # a --> true
-    assert_run my_activity.to_h[:circuit], seq: [:a, :c], terminus: my_activity.to_h[:outputs].fetch(:success).signal, target_ctx: {seq: []}
+    assert_run my_activity, seq: [:a, :c], terminus: :success, target_ctx: {seq: []}
     # a --> false
-    assert_run my_activity.to_h[:circuit], seq: [1, :a, :b], terminus: my_activity.to_h[:outputs].fetch(:failure).signal, target_ctx: {seq: [1], a: Trailblazer::Activity::Left}
+    assert_run my_activity, seq: [1, :a, :b], terminus: :failure, target_ctx: {seq: [1], a: Trailblazer::Activity::Left}
     # a --> PassFast
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:pass_fast).signal,
+    assert_run my_activity, seq: [1, :a], terminus: :pass_fast,
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::PassFast}
     # a --> FailFast
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal,
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast,
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::FailFast}
   end
 
@@ -187,14 +187,14 @@ class TopologyFastTrackTest < Minitest::Spec
     end
 
     # a --> true
-    assert_run my_activity.to_h[:circuit], seq: [:a, :c], terminus: my_activity.to_h[:outputs].fetch(:success).signal, target_ctx: {seq: []}
+    assert_run my_activity, seq: [:a, :c], terminus: :success, target_ctx: {seq: []}
     # a --> false
-    assert_run my_activity.to_h[:circuit], seq: [1, :a, :b], terminus: my_activity.to_h[:outputs].fetch(:failure).signal, target_ctx: {seq: [1], a: false}
+    assert_run my_activity, seq: [1, :a, :b], terminus: :failure, target_ctx: {seq: [1], a: false}
     # a --> PassFast
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:pass_fast).signal,
+    assert_run my_activity, seq: [1, :a], terminus: :pass_fast,
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::PassFast}
     # a --> FailFast
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:fail_fast).signal,
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast,
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::FailFast}
   end
 
@@ -232,10 +232,10 @@ class TopologyFastTrackTest < Minitest::Spec
       include T.def_steps(:a)
     end
 
-    assert_run my_activity, seq: [:a], terminus: my_activity.to_h[:outputs].fetch(:success).signal
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:failure).signal,
+    assert_run my_activity, seq: [:a], terminus: :success
+    assert_run my_activity, seq: [1, :a], terminus: :failure,
       target_ctx: {seq: [1], a: Trailblazer::Activity::Left}
-    assert_run my_activity.to_h[:circuit], seq: [1, :a], terminus: my_activity.to_h[:outputs].fetch(:failure).signal,
+    assert_run my_activity, seq: [1, :a], terminus: :failure,
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::PassFast}
   end
 
