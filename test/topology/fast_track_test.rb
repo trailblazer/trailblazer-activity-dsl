@@ -239,6 +239,63 @@ class TopologyFastTrackTest < Minitest::Spec
       target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::PassFast}
   end
 
+  # it "with a nested FastTrack and fail_fast: true" do
+  #   my_nested = Class.new(Trailblazer::Activity::FastTrack) do
+  #     step :a, fast_track: true
+  #     include T.def_steps(:a)
+  #   end
+
+  #   my_activity = Class.new(Trailblazer::Activity::FastTrack) do
+  #     step Subprocess(my_nested),
+  #       id: "Fxm",
+  #       fail_fast: true # what happens when we return FailFast from this activity?
+
+  #   end
+
+  #   assert_run my_activity, seq: [:a], terminus: :success
+  #   assert_run my_activity, seq: [:a], terminus: :fail_fast, target_ctx: {a: Trailblazer::Activity::FastTrack::Signal::FailFast, seq: []}
+  # end
+
+  it "#step, pass_fast: true, fast_track: true" do
+    my_activity = Class.new(Trailblazer::Activity::FastTrack) do
+      step :a,
+        pass_fast: true,
+        fast_track: true # this is necessary so we can actually return {PassFast}
+      step :b # never reached!
+
+      include T.def_steps(:a, :b)
+    end
+
+    # {#a} --> Right
+    assert_run my_activity, seq: [:a], terminus: :pass_fast
+    # {#a} --> Left
+    assert_run my_activity, seq: [1, :a], terminus: :failure, target_ctx: {seq: [1], a: false}
+    # #a --> PassFast
+    assert_run my_activity, seq: [1, :a], terminus: :pass_fast, target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::PassFast}
+    # #a --> FailFast
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast, target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::FailFast}
+  end
+
+  it "#step, fail_fast: true, fast_track: true" do
+    my_activity = Class.new(Trailblazer::Activity::FastTrack) do
+      step :a,
+        fail_fast: true,
+        fast_track: true # this is necessary so we can actually return {PassFast}
+      step :b
+
+      include T.def_steps(:a, :b)
+    end
+
+    # {#a} --> Right
+    assert_run my_activity, seq: [:a, :b], terminus: :success
+    # #a --> PassFast
+    assert_run my_activity, seq: [1, :a], terminus: :pass_fast, target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::PassFast}
+    # {#a} --> Left
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast, target_ctx: {seq: [1], a: false}
+    # #a --> FailFast
+    assert_run my_activity, seq: [1, :a], terminus: :fail_fast, target_ctx: {seq: [1], a: Trailblazer::Activity::FastTrack::Signal::FailFast}
+  end
+
   describe "#FastTrack()" do
     it "FastTrack() always has one terminus" do
       # DISCUSS: this is wrong on purpose, since we don't make this public.

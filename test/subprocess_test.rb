@@ -34,8 +34,8 @@ class SubprocessTest < Minitest::Spec
       include T.def_steps(:a, :c)
     end
 
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:success].signal, seq: [:a, :b, :c]
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:failure].signal, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
+    assert_run my_activity, terminus: :success, seq: [:a, :b, :c]
+    assert_run my_activity, terminus: :failure, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
     # even though we provide for {:outputs}, the fast tracks are ignored by Railway.
     assert_raises(KeyError) { assert_run my_activity, seq: nil, target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::PassFast} }
     assert_raises(KeyError) { assert_run my_activity, seq: nil, target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::FailFast} }
@@ -50,8 +50,8 @@ class SubprocessTest < Minitest::Spec
       include T.def_steps(:a, :c)
     end
 
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:success].signal, seq: [:a, :b, :c]
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:failure].signal, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
+    assert_run my_activity, terminus: :success, seq: [:a, :b, :c]
+    assert_run my_activity, terminus: :failure, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
     # even though we provide for {:outputs}, the fast tracks are ignored by FastTrack.
     assert_raises(KeyError) { assert_run my_activity, seq: nil, target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::PassFast} }
     assert_raises(KeyError) { assert_run my_activity, seq: nil, target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::FailFast} }
@@ -68,10 +68,10 @@ class SubprocessTest < Minitest::Spec
       include T.def_steps(:a, :c)
     end
 
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:success].signal, seq: [:a, :b, :c]
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:failure].signal, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:fail_fast].signal, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::FailFast}
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:pass_fast].signal, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::PassFast}
+    assert_run my_activity, terminus: :success, seq: [:a, :b, :c]
+    assert_run my_activity, terminus: :failure, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
+    assert_run my_activity, terminus: :fail_fast, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::FailFast}
+    assert_run my_activity, terminus: :pass_fast, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::FastTrack::Signal::PassFast}
   end
 
   # NOTE: This test is not really necessary and could be moved to test/docs.
@@ -94,8 +94,8 @@ class SubprocessTest < Minitest::Spec
       include T.def_steps(:a, :c, :d)
     end
 
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:success].signal, seq: [:a, :b, :d]
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:success].signal, seq: [:a, :b, :c, :d], target_ctx: {seq: [], b: MyReceivedSignal}
+    assert_run my_activity, terminus: :success, seq: [:a, :b, :d]
+    assert_run my_activity, terminus: :success, seq: [:a, :b, :c, :d], target_ctx: {seq: [], b: MyReceivedSignal}
   end
 
   it "#Subprocess() with Railway and {strict: true}" do
@@ -120,9 +120,9 @@ class SubprocessTest < Minitest::Spec
 
     # pp my_activity.to_h
 
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:success].signal, seq: [:a, :b, :c]
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:failure].signal, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
-    assert_run my_activity, terminus: my_activity.to_h[:outputs][:success].signal, seq: [:a, :b], target_ctx: {seq: [], b: MyReceivedSignal}
+    assert_run my_activity, terminus: :success, seq: [:a, :b, :c]
+    assert_run my_activity, terminus: :failure, seq: [:a, :b], target_ctx: {seq: [], b: Trailblazer::Activity::Left}
+    assert_run my_activity, terminus: :success, seq: [:a, :b], target_ctx: {seq: [], b: MyReceivedSignal}
   end
 
   describe "{:patch}" do
