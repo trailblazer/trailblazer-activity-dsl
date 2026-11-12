@@ -2,6 +2,16 @@ module Trailblazer
   class Activity
     module DSL
       class Normalizer
+        def self.merge_macro_options(ctx, flow_options, _, first_arg:, **)
+          ctx = first_arg.merge(**ctx, first_arg: nil) if first_arg.is_a?(Hash)
+
+          return ctx, flow_options
+        end
+
+        def self.merge_default_options(ctx, flow_options, _, default_options:, **)
+          return default_options.merge(ctx), flow_options
+        end
+
         # if the {first_arg} is something not nil, we need to convert it to a real Step (node).
         def self.is_step?(ctx, flow_options, _, first_arg:, **)
           return ctx, flow_options, first_arg ? Activity::Right : Activity::Left
@@ -97,6 +107,8 @@ module Trailblazer
 
         # DISCUSS: should we use proper {:connections} hashes here? it seems to work like that.
         Step = Circuit::Builder.Circuit(
+          [:merge_macro_options, method(:merge_macro_options)],
+          [:merge_default_options, method(:merge_default_options)],
           [:is_step?, method(:is_step?), connections: {Activity::Left => [:is_node?, Activity::Left], Activity::Right => [:normalize_id_for_step, Activity::Right]}],
           [:normalize_id_for_step, method(:normalize_id_for_step), connections: {nil => :build_node_for_step}], # DISCUSS: what if we need to know what
           [:is_node?, method(:is_node?), connections: {Activity::Left => [:build_node_for_task, Activity::Left], Activity::Right => [:build_task_wrap_pipeline, Activity::Right]}],

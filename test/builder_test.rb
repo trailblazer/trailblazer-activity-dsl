@@ -146,6 +146,7 @@ class DslBuilderTest < Minitest::Spec
 
   it "#clone accepts {:adds} for all normalizers" do
     my_normalizer = Trailblazer::Circuit::Builder.Pipeline(
+      [:merge_default_options, Trailblazer::Activity::DSL::Normalizer.method(:merge_default_options)],
       # --> we add {#my_build_sequence_row} here via the {Builder#clone} call. <--
       [:compile_adds_for_sequence, Trailblazer::Activity::DSL::Normalizer.method(:compile_adds_for_sequence)]
     )

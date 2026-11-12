@@ -37,20 +37,14 @@ module Trailblazer
         def step!(type, first_arg = nil, **options, &block)
           options = options.merge(block_arg: block) if block_given?
 
-          macro_options = {}
-
-          if first_arg.is_a?(Hash) # eg Subprocess()
-            macro_options = first_arg
-            first_arg = nil
-          end
-
-          options = options.merge(first_arg: first_arg)
+          options = options.merge(
+            first_arg: first_arg,
+            default_options: self.default_options.fetch(type),
+          )
 
           self.sequence = alter_sequence(
             self.sequence,
             self.normalizers.fetch(type),
-            **self.default_options.fetch(type), # these are settings such as {magnetic_to:}, settable per builder.
-            **macro_options,
             **options
           )
         end
