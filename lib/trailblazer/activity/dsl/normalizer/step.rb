@@ -105,13 +105,18 @@ module Trailblazer
           return ctx.merge(id: id), flow_options
         end
 
+        def self.normalize_id_for_task(ctx, flow_options, _, task:, id: nil, **)
+          return ctx.merge(id: id.nil? ? task : id), flow_options
+        end
+
         # DISCUSS: should we use proper {:connections} hashes here? it seems to work like that.
         Step = Circuit::Builder.Circuit(
           [:merge_macro_options, method(:merge_macro_options)],
           [:merge_default_options, method(:merge_default_options)],
           [:is_step?, method(:is_step?), connections: {Activity::Left => [:is_node?, Activity::Left], Activity::Right => [:normalize_id_for_step, Activity::Right]}],
           [:normalize_id_for_step, method(:normalize_id_for_step), connections: {nil => :build_node_for_step}], # DISCUSS: what if we need to know what
-          [:is_node?, method(:is_node?), connections: {Activity::Left => [:build_node_for_task, Activity::Left], Activity::Right => [:build_task_wrap_pipeline, Activity::Right]}],
+          [:is_node?, method(:is_node?), connections: {Activity::Left => [:normalize_id_for_task, Activity::Left], Activity::Right => [:build_task_wrap_pipeline, Activity::Right]}],
+          [:normalize_id_for_task, method(:normalize_id_for_task), connections: {nil => :build_node_for_task}],
           [:build_node_for_task, method(:build_node_for_task), connections: {nil => :build_task_wrap_pipeline}],
           [:build_node_for_step, method(:build_node_for_step), connections: {nil => :build_task_wrap_pipeline}],
           [:build_task_wrap_pipeline, method(:build_task_wrap_pipeline)],
