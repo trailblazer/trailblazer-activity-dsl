@@ -91,7 +91,7 @@ require "trailblazer/activity/dsl/feature/extension/options"
 
 [Trailblazer::Activity::Path, Trailblazer::Activity::Railway, Trailblazer::Activity::FastTrack].each do |topology|
   circuit, outputs, builder, helpers = Trailblazer::Activity::DSL::Topology.build(
-    builder: topology.config.builder, default_options: {},
+    builder: topology.config.builder,
 
     # DISCUSS: we introduced VariableMapping::TOPOLOGY_BUILD_OPTIONS, should we do that here with all features?
     helpers: {
