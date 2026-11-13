@@ -12,7 +12,7 @@ class SubprocessTest < Minitest::Spec
   it "#Subprocess(FastTrack) with Path" do
     my_activity = Class.new(Trailblazer::Activity::Path) do
       step :a
-      step Subprocess(SubprocessTest.my_nested_activity), id: "FIXME, no ID automatically assigned"
+      step Subprocess(SubprocessTest.my_nested_activity)
       step :c
 
       include T.def_steps(:a, :c)
@@ -28,7 +28,7 @@ class SubprocessTest < Minitest::Spec
   it "#Subprocess(FastTrack) with Railway" do
     my_activity = Class.new(Trailblazer::Activity::Railway) do
       step :a
-      step Subprocess(SubprocessTest.my_nested_activity), id: "FIXME, no ID automatically assigned"
+      step Subprocess(SubprocessTest.my_nested_activity)
       step :c
 
       include T.def_steps(:a, :c)
@@ -44,7 +44,7 @@ class SubprocessTest < Minitest::Spec
   it "#Subprocess(FastTrack) with FastTrack" do
     my_activity = Class.new(Trailblazer::Activity::FastTrack) do
       step :a
-      step Subprocess(SubprocessTest.my_nested_activity), id: "FIXME, no ID automatically assigned"
+      step Subprocess(SubprocessTest.my_nested_activity)
       step :c
 
       include T.def_steps(:a, :c)
@@ -61,7 +61,6 @@ class SubprocessTest < Minitest::Spec
     my_activity = Class.new(Trailblazer::Activity::FastTrack) do
       step :a
       step Subprocess(SubprocessTest.my_nested_activity),
-        id: "FIXME, no ID automatically assigned",
         fast_track: true
       step :c
 
@@ -86,7 +85,7 @@ class SubprocessTest < Minitest::Spec
 
     my_activity = Class.new(Trailblazer::Activity::Railway) do
       step :a
-      step Subprocess(my_nested_activity), id: "FIXME, no ID automatically assigned",
+      step Subprocess(my_nested_activity),
         Output(:received) => Track(:received)
       step :c, magnetic_to: :received
       step :d
@@ -111,7 +110,7 @@ class SubprocessTest < Minitest::Spec
     my_activity = Class.new(Trailblazer::Activity::Railway) do
       step :a
       step Subprocess(my_nested_activity,
-        strict: true), id: "FIXME, no ID automatically assigned"
+        strict: true)
       step :c
       step :d, magnetic_to: :received # FIXME: otherwise, the nested activity will stop on MyReceivedSignal
 
@@ -174,5 +173,17 @@ class SubprocessTest < Minitest::Spec
     end
 
     assert_equal my_activity.config.builder.sequence.nodes[:a].data[:subprocess], true
+  end
+
+  it "uses the nested activity as {:id} when none is given" do
+    nested = SubprocessTest.my_nested_activity
+
+    my_activity = Class.new(Trailblazer::Activity::Railway) do
+      step Subprocess(nested)
+      step Subprocess(Trailblazer::Activity::Path), id: :path
+    end
+
+    assert_equal my_activity.config.builder.sequence.nodes.keys - [:"End.success", :"End.failure"], [nested, :path]
+    assert_run my_activity, terminus: :success, seq: [:b]
   end
 end
