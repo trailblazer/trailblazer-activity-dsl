@@ -386,7 +386,7 @@ class TopologyTest < Minitest::Spec
       node: my_topology_node,
     )
 
-    assert_run my_topology_node, node: true,
+    assert_run node: my_topology_node,
       seq: [:a],
       terminus: success,
       use_application_ctx: false # FIXME
