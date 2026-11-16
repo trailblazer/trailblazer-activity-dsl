@@ -31,32 +31,20 @@ module Trailblazer
         end
 
         module ExecContext
-          module_function
 
-          def find_path(nodes, path: []) # DISCUSS: move to Introspect.
-            nodes.flat_map do |id, node|
-              paths = []
-
-              if node.task.is_a?(Circuit) # recurse.
-                paths += find_path(node.task.nodes, path: [*path, id])
-              end
-
-              if node.is_a?(Circuit::Node::MergeToCircuitOptions) && node.options[:instance_method]
-                paths += [[[*path, id], node]]
-              end
-
-              paths
-            end
-          end
         end
 
         def self.inherited(subclass)
           super
 
-          paths = []
-          paths = ExecContext.find_path(subclass.config.circuit.nodes) if subclass.config.circuit # FIXME: make check unnecessary.
+          exec_context_for_subclass = subclass.new.freeze
 
+          paths = []
           node_for_subclass = Circuit::Node[subclass.config.circuit, Circuit::Processor] # FIXME: store canonical node somewhere.
+
+          if subclass.config.circuit # FIXME: make check unnecessary.
+            paths = Circuit::Node::Introspect.find(node_for_subclass) { |_, node| node.options[:requires_exec_context] }
+          end
 
           paths.each do |path, node|
             path, id = path[0..-2], path[-1]
@@ -64,16 +52,19 @@ module Trailblazer
             node_for_subclass = Circuit::Node::Patch.(node_for_subclass, path, adds:[
               [
                 id,
-                node.class[node.task, node.interface, merge_to_circuit_options: node.merge_to_circuit_options.merge(exec_context: subclass.new.freeze)],
+                node.class[node.task, node.interface, merge_to_circuit_options: node.merge_to_circuit_options.merge(exec_context: exec_context_for_subclass)],
                 :replace, id
               ]
             ])
           end
 
+          # node.class[node.task, node.interface, merge_to_circuit_options: node.merge_to_circuit_options.merge(exec_context: exec_context_for_subclass)]
+          # node.clone()
+
           subclass.config.circuit = node_for_subclass.task
 
           # when adding new #steps, do it with the new {exec_context}.
-          subclass.config.builder = config.builder.clone(defaults: {exec_context: subclass.new.freeze})
+          subclass.config.builder = config.builder.clone(defaults: {exec_context: exec_context_for_subclass})
         end
 
         config.builder = Builder.new(default_options: {})
