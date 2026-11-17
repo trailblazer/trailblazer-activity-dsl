@@ -30,13 +30,10 @@ module Trailblazer
           config.circuit.resolve(*args)
         end
 
-        module ExecContext
-
-        end
-
         def self.inherited(subclass)
           super
 
+          # TODO: extract that to separate method.
           exec_context_for_subclass = subclass.new.freeze
 
           paths = []
@@ -47,19 +44,16 @@ module Trailblazer
           end
 
           paths.each do |path, node|
-            path, id = path[0..-2], path[-1]
+            *path, id = path
 
-            node_for_subclass = Circuit::Node::Patch.(node_for_subclass, path, adds:[
+            node_for_subclass = Circuit::Node::Patch.(node_for_subclass, path, adds: [
               [
                 id,
-                node.class[node.task, node.interface, merge_to_circuit_options: node.merge_to_circuit_options.merge(exec_context: exec_context_for_subclass)],
+                node.merge(merge_to_circuit_options: {exec_context: exec_context_for_subclass}),
                 :replace, id
               ]
             ])
           end
-
-          # node.class[node.task, node.interface, merge_to_circuit_options: node.merge_to_circuit_options.merge(exec_context: exec_context_for_subclass)]
-          # node.clone()
 
           subclass.config.circuit = node_for_subclass.task
 
