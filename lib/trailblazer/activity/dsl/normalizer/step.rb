@@ -21,8 +21,8 @@ module Trailblazer
           return ctx, flow_options, node_for_call_task ? Activity::Right : Activity::Left
         end
 
-        def self.build_node_for_step(ctx, flow_options, _, first_arg:, id:, exec_context:, **) # FIXME: {:exec_context} is not mandatory.
-          step_node_for_call_task = Activity::Step.build(first_arg, id: id, exec_context: exec_context)
+        def self.build_node_for_step(ctx, flow_options, _, first_arg:, id:, **options)
+          step_node_for_call_task = Activity::Step.build(first_arg, id: id, **options.slice(:exec_context))
 
           return ctx.merge(node_for_call_task: step_node_for_call_task), flow_options
         end

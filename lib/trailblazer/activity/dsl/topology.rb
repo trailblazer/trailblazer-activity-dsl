@@ -49,7 +49,7 @@ module Trailblazer
             node_for_subclass = Circuit::Node::Patch.(node_for_subclass, path, adds: [
               [
                 id,
-                node.merge(merge_to_circuit_options: {exec_context: exec_context_for_subclass}),
+                node.merge(merge_to_lib_ctx: {exec_context: exec_context_for_subclass}),
                 :replace, id
               ]
             ])

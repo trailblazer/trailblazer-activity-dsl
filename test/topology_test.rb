@@ -287,7 +287,7 @@ class TopologyTest < Minitest::Spec
     end
 
     assert_raises Trailblazer::Circuit::Adds::IllegalIdError do
-      my_topology.step :B, id: :b, exec_context: nil, wirings: {}, adds_insertion_args: [:after]
+      my_topology.step Object, id: :b, wirings: {}, adds_insertion_args: [:after]
     end
   end
 
@@ -376,14 +376,13 @@ class TopologyTest < Minitest::Spec
 
     my_topology_node = Trailblazer::Circuit::Node[my_topology.to_h[:circuit], Trailblazer::Circuit::Processor]
 
-    lib_ctx, flow_options, signal = Trailblazer::Circuit::Node::Runner.(
+    lib_ctx, flow_options, signal = Trailblazer::Circuit::Node::Runner.new.(
       {target_ctx: {seq: []}},
       # {application_ctx: },
-      {},
+      Trailblazer::Circuit::Node::Runner.new,
       nil,
-      runner: Trailblazer::Circuit::Node::Runner,
-      context_implementation: Trailblazer::Circuit::Context,
-      node: my_topology_node,
+      my_topology_node,
+      :Create
     )
 
     assert_run node: my_topology_node,
