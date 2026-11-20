@@ -227,7 +227,7 @@ class OutputTuplesTest < Minitest::Spec
 
     my_received_signal = Class.new(Trailblazer::Activity::Signal)
 
-    for topology_class, (expected_terminus, expected_seq) in topology_classes
+    topology_classes.each do |topology_class, (expected_terminus, expected_seq)|
       # puts "@@@@@ #{topology_class.inspect}"
       my_path = Class.new(topology_class) do
         step :a,
