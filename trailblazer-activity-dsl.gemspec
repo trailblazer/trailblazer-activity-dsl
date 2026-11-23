@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "dry-configurable"
-  spec.add_dependency "trailblazer-activity"
+  spec.add_dependency "trailblazer-activity", "~> 3.0"
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "minitest"#, ">= 5.15.0", "< 5.16.0"
