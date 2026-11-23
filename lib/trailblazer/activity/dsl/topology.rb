@@ -23,11 +23,12 @@ module Trailblazer
           }
         end
 # FIXME: test this behavior (Runtime module_.
+        # Called per step by Processor: config[] skips dry-configurable's method_missing.
         def self.start_tuple # FIXME: make this nicer, for Processor
-          config.circuit.start_tuple
+          config[:circuit].start_tuple
         end
-        def self.resolve(*args) # FIXME: make this nicer, for Processor
-          config.circuit.resolve(*args)
+        def self.resolve(id, signal) # FIXME: make this nicer, for Processor
+          config[:circuit].resolve(id, signal)
         end
 
         def self.inherited(subclass)
